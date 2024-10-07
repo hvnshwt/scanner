@@ -5,9 +5,12 @@ set(CMAKE_CXX_STANDARD 23)
 
 find_package(CURL REQUIRED)
 
+find_package(PostgreSQL REQUIRED)
+
 add_executable(scanner main.cpp)
 
 target_link_libraries(scanner
   PUBLIC CURL::libcurl
+  PostgreSQL::PostgreSQL
 #   PUBLIC Threads::Threads
 )
