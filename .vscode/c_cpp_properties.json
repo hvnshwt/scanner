@@ -3,7 +3,9 @@
         {
             "name": "Win32",
             "includePath": [
-                "${default}"
+                "${default}",
+                "${workspaceFolder}/nlohmann_json/include",
+                "${workspaceFolder}/include"
             ],
             "defines": [
                 "_DEBUG",
