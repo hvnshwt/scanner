@@ -10,6 +10,8 @@
 
 #include <database.h>
 
+#include <algorithm>
+
 
 #define UNUSED(x) (void)(x)
 
@@ -55,32 +57,9 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 
 
 int main(void)
-{  
-  // int libpq_ver = PQlibVersion();
-  // printf("Version of libpq: %d\n", libpq_ver);
-
-  conn = PQconnectdb("user=postgres password=devs_pc host=127.0.0.1 dbname=postgres");
-  if(PQstatus(conn) != CONNECTION_OK)
-  terminate(1);
-  PQsetNoticeProcessor(conn, processNotice, NULL);
-
-  int server_ver = PQserverVersion(conn);
-  char *user = PQuser(conn);
-  char *db_name = PQdb(conn);
-
-  printf("Server version: %d\n", server_ver);
-  printf("User: %s\n", user);
-  printf("Database name: %s\n", db_name);
-
-  // res = PQexec(conn, "INSERT INTO exchanges (token_id, tag, price) VALUES ('DhFkxvDAGCQQdfMXDw8gHfD3KKQBDPvta4tiqEXnvkat', 'PLANECAT', 0.00000285487);");
-  // res = PQexec(conn, "ALTER DATABASE scannerdb RENAME TO postgres;");
-  res = PQexec(conn, "DELETE FROM exchanges *;");
-  if(PQresultStatus(res) != PGRES_COMMAND_OK)
-    terminate(1);
-  clearRes();
-
-  int nrows = PQntuples(res);
-  printf("Total: %d rows\n", nrows);
+{ 
+  Database *database;
+  database = new Database("postgres", "devs_pc", "127.0.0.1", "postgres");
 
   CURL *curl;
   CURLcode result;
@@ -88,7 +67,8 @@ int main(void)
  
   curl = curl_easy_init();
   if(curl) {
-    curl_easy_setopt(curl, CURLOPT_URL, "https://price.jup.ag/v6/price?ids=DhFkxvDAGCQQdfMXDw8gHfD3KKQBDPvta4tiqEXnvkat");
+    curl_easy_setopt(curl, CURLOPT_URL, "https://quote-api.jup.ag/v6/tokens");
+    // curl_easy_setopt(curl, CURLOPT_URL, "https://price.jup.ag/v6/price?ids=DhFkxvDAGCQQdfMXDw8gHfD3KKQBDPvta4tiqEXnvkat");
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -106,10 +86,21 @@ int main(void)
 
     objJson = nlohmann::json::parse(readBuffer);
     
-    double price = objJson["data"]["DhFkxvDAGCQQdfMXDw8gHfD3KKQBDPvta4tiqEXnvkat"]["price"].get<nlohmann::json::number_float_t>();
+    std::string token = objJson[0];
+    
+    const int range = objJson.size();
 
-    std::cout << price << std::endl;
+    std::string multi_row_query;
 
+    std::cout << "Database recording start" << std::endl;
+    for (int i = 0; i < range; i++)
+    {
+      multi_row_query += '(' + objJson[i].dump() + ')';
+      if (i != range - 1)
+        multi_row_query += ',';
+    }
+    std::replace(multi_row_query.begin(), multi_row_query.end(), '"', '\'');
+    database->multi_insert_token_id("exchanges", multi_row_query);
  
     /* always cleanup */
     curl_easy_cleanup(curl);

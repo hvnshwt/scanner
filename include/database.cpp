@@ -42,9 +42,19 @@ Database::Database(const char *user, const char *password, const char *host, con
     PQsetNoticeProcessor(conn, processNotice, NULL);
 }
 
-void Database::insert_token_id(const char *table, const char *token_id)
+void Database::insert_token_id(const std::string table, const std::string token_id)
 {
     string_f query_str = std::format("INSERT INTO {} (token_id) VALUES ('{}');", table, token_id);
+    const char *query_constChar = query_str.c_str();
+    res = PQexec(conn, query_constChar);
+    if(PQresultStatus(res) != PGRES_COMMAND_OK)
+        terminate(1);
+    clearRes();
+}
+
+void Database::multi_insert_token_id(const std::string table, const std::string vals)
+{
+    string_f query_str = std::format("INSERT INTO {} (token_id) VALUES {};", table, vals);
     const char *query_constChar = query_str.c_str();
     res = PQexec(conn, query_constChar);
     if(PQresultStatus(res) != PGRES_COMMAND_OK)
