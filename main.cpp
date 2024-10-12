@@ -11,6 +11,7 @@
 #include <database.h>
 
 #include <algorithm>
+#include <chrono>
 
 
 #define UNUSED(x) (void)(x)
@@ -91,16 +92,22 @@ int main(void)
     const int range = objJson.size();
 
     std::string multi_row_query;
+    // multi_row_query.resize(49 * range);
 
-    std::cout << "Database recording start" << std::endl;
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    // составление строки вида "(0, 0), (0, 0), (0, 0), (0, 0);"
     for (int i = 0; i < range; i++)
     {
-      multi_row_query += '(' + objJson[i].dump() + ')';
+      multi_row_query.append("('" + objJson[i].dump().substr(1, objJson[i].dump().size() -2) + "')");
       if (i != range - 1)
-        multi_row_query += ',';
+        multi_row_query.append(",");
     }
-    std::replace(multi_row_query.begin(), multi_row_query.end(), '"', '\'');
+    // std::replace(multi_row_query.begin(), multi_row_query.end(), '"', '\'');
     database->multi_insert_token_id("exchanges", multi_row_query);
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Diff(ms) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
+
  
     /* always cleanup */
     curl_easy_cleanup(curl);
