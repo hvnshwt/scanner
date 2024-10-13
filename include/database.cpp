@@ -1,5 +1,6 @@
 #include "database.h"
 #include <format>
+#include <iostream>
 
 #define UNUSED(x) (void)(x)
 
@@ -52,14 +53,40 @@ void Database::insert_token_id(const std::string table, const std::string token_
     clearRes();
 }
 
-void Database::multi_insert_token_id(const std::string table, const std::string vals)
+void Database::multi_insert_token_id(const std::string table, const nlohmann::json objJson)
 {
-    string_f query_str = std::format("INSERT INTO {} (token_id) VALUES {};", table, vals);
+    const int range = objJson.size();
+
+    std::string multi_row_query;
+
+    // составление строки вида "('abc'), (abc), (abc), (abc);"
+    for (int i = 0; i < range; i++)
+    {
+      multi_row_query.append("('" + objJson[i].dump().substr(1, objJson[i].dump().size() -2) + "')");
+      if (i != range - 1)
+        multi_row_query.append(",");
+    }
+
+    string_f query_str = std::format("INSERT INTO {} (token_id) VALUES {};", table, multi_row_query);
     const char *query_constChar = query_str.c_str();
     res = PQexec(conn, query_constChar);
+
     if(PQresultStatus(res) != PGRES_COMMAND_OK)
         terminate(1);
     clearRes();
+}
+
+std::vector<std::string> Database::get_tags(const std::string table)
+{
+    std::vector<std::string> tagsVector;
+    res = PQexec(conn, "SELECT tag FROM exchanges");
+    int nrows = PQntuples(res);
+    for(int i = 0; i < nrows; i++)
+    {
+        char* tag = PQgetvalue(res, i, 0);
+        tagsVector.push_back(tag);
+    }
+    return tagsVector;
 }
 
 Database::~Database()

@@ -8,7 +8,7 @@ class Exchange
 private:
     // data
 public:
-    Exchange(std::string&& baseAPI) : baseAPI(std::move(baseAPI)){};
+    // Exchange(std::string&& baseAPI) : baseAPI(std::move(baseAPI)){};
     virtual double getPrice(const char* id) const = 0;
     virtual ~Exchange() = default;
 protected:
