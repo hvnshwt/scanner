@@ -59,7 +59,7 @@ void Database::multi_insert_token_id(const std::string table, const nlohmann::js
 
     std::string multi_row_query;
 
-    // составление строки вида "('abc'), (abc), (abc), (abc);"
+    // составление строки вида "('abc'), ('abc'), ('abc'), ('abc');"
     for (int i = 0; i < range; i++)
     {
       multi_row_query.append("('" + objJson[i].dump().substr(1, objJson[i].dump().size() -2) + "')");
@@ -68,8 +68,7 @@ void Database::multi_insert_token_id(const std::string table, const nlohmann::js
     }
 
     string_f query_str = std::format("INSERT INTO {} (token_id) VALUES {};", table, multi_row_query);
-    const char *query_constChar = query_str.c_str();
-    res = PQexec(conn, query_constChar);
+    res = PQexec(conn, query_str.c_str());
 
     if(PQresultStatus(res) != PGRES_COMMAND_OK)
         terminate(1);
@@ -79,7 +78,7 @@ void Database::multi_insert_token_id(const std::string table, const nlohmann::js
 std::vector<std::string> Database::get_tags(const std::string table)
 {
     std::vector<std::string> tagsVector;
-    res = PQexec(conn, "SELECT tag FROM exchanges");
+    res = PQexec(conn, "SELECT tag FROM exchanges;");
     int nrows = PQntuples(res);
     for(int i = 0; i < nrows; i++)
     {
@@ -89,7 +88,18 @@ std::vector<std::string> Database::get_tags(const std::string table)
     return tagsVector;
 }
 
+void Database::update_prices(const std::string table, std::vector<std::string> tags, std::vector<double> prices)
+{
+    res = PQexec(conn, "BEGIN;");
+    for (int i = 0; i < prices.size(); i++){
+        string_f query_str = std::format("UPDATE {} SET price = {} WHERE tag = '{}';", table, prices[i], tags[i]);
+        res = PQexec(conn, query_str.c_str());
+    }
+    res = PQexec(conn, "COMMIT;");
+}
+
 Database::~Database()
 {
+    PQclear(res);
     PQfinish(conn);
 }

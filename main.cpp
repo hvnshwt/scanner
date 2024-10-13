@@ -25,47 +25,21 @@ int main(void)
     Database *database;
     database = new Database("postgres", "devs_pc", "127.0.0.1", "postgres");
 
-    std::vector<std::string> tags;
+    Jupiter *jupiter_api;
+    jupiter_api = new Jupiter();
 
+    std::vector<std::string> tags;
     tags = database->get_tags("exchanges");
+
+    std::vector<double> prices;
 
     for (int i = 0; i < tags.size(); i++)
     {
-        std::cout << tags[i] << std::endl;
+        prices.push_back(jupiter_api->getPrice(tags[i]));
+        std::cout << tags[i] << " - " << jupiter_api->getPrice(tags[i]) << std::endl;
     }
 
-    //   CURL *curl;
-    //   CURLcode result;
-    //   std::string readBuffer;
-
-    //   curl = curl_easy_init();
-    //   if(curl) {
-    //     curl_easy_setopt(curl, CURLOPT_URL, "https://quote-api.jup.ag/v6/tokens");
-    //     // curl_easy_setopt(curl, CURLOPT_URL, "https://price.jup.ag/v6/price?ids=DhFkxvDAGCQQdfMXDw8gHfD3KKQBDPvta4tiqEXnvkat");
-    //     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    //     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    //     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-
-    //     result = curl_easy_perform(curl);
-
-    //     /* Check for errors */
-    //     if(result != CURLE_OK)
-    //       fprintf(stderr, "curl_easy_perform() failed: %s\n",
-    //               curl_easy_strerror(result));
-
-    //     // std::cout << readBuffer << std::endl;
-
-    //     nlohmann::json objJson;
-
-    //     objJson = nlohmann::json::parse(readBuffer);
-
-    //     std::string token = objJson[0];
-
-    // database->multi_insert_token_id("exchanges", objJson);
-
-    /* always cleanup */
-    // curl_easy_cleanup(curl);
-    //   }
+    database->update_prices("exchanges", tags, prices);
 
     return 0;
 }

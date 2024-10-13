@@ -27,6 +27,8 @@ public:
 
     std::vector<std::string> get_tags(const std::string table);
 
+    void update_prices(const std::string table, std::vector<std::string> tags, std::vector<double> prices);
+
     // Destructor
     ~Database();
 };
