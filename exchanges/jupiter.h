@@ -1,3 +1,5 @@
+#pragma once
+
 #include "exchange.h"
 #include <nlohmann/json.hpp>
 
